@@ -1,24 +1,40 @@
 <template>
   <div class="quote-generator">
-    <p v-if="error" class="error-message">{{ error }}</p>
-    <div v-else>
-      <p class="quote">{{ quote?.content }}</p>
-      <p v-if="quote?.author" class="author">— {{ quote.author }}</p>
-
-      <div class="wrapper">
-        <button @click="copyToClipboard" class="copy-btn">Скопировать цитату</button>
-        <button @click="fetchQuote" class="new-quote-btn">Получить новую цитату</button>
+    <div>
+      <!--  If error, show error message  -->
+      <div v-if="error" class="error-message">
+        <span>{{ error }}</span>
+        <button @click="fetchQuote" class="new-quote-btn">Get new quote</button>
       </div>
 
-      <!-- buttons for socials -->
-      <div class="social-share wrapper">
-        <a :href="telegramLink" target="_blank">Поделиться в Telegram</a>
-        <a :href="facebookLink" target="_blank">Поделиться в Facebook</a>
+      <div v-else>
+        <div v-if="quote">
+          <div class="quote-wrapper">
+            <p class="quote">{{ quote?.content }}</p>
+            <p v-if="quote?.author" class="author">— {{ quote.author }}</p>
+          </div>
+
+          <div class="wrapper">
+            <button @click="copyToClipboard" class="copy-btn">Copy quote</button>
+            <button @click="fetchQuote" :disabled="isLoading" class="new-quote-btn">
+              <!-- Showing text loading, if request sending -->
+              <span v-if="isLoading">Loading...</span>
+              <span v-else>Get new quote</span>
+            </button>
+          </div>
+
+          <!-- buttons for socials -->
+          <div class="social-share wrapper">
+            <a :href="telegramLink" target="_blank">Share to Telegram</a>
+            <a :href="twitterLink" target="_blank">Share to Twitter</a>
+          </div>
+        </div>
       </div>
     </div>
 
-    <h3>История цитат</h3>
-    <ul class="history">
+    <!--  History block  -->
+    <h3 v-if="history.length > 0">History quotes</h3>
+    <ul v-if="history.length > 0" class="history">
       <li class="history-item" v-for="(item, index) in history" :key="index">
         "{{ item.content }}" — {{ item.author }}
       </li>
@@ -35,6 +51,7 @@ export default {
       quote: null,
       error: null,
       history: [],
+      isLoading: false,
     };
   },
   computed: {
@@ -42,26 +59,29 @@ export default {
       const text = `"${this.quote?.content}" — ${this.quote?.author}`;
       return `https://t.me/share/url?url=${encodeURIComponent(text)}`;
     },
-    facebookLink() {
+    twitterLink() {
       const text = `"${this.quote?.content}" — ${this.quote?.author}`;
-      return `https://www.facebook.com/share/share.php?u=${encodeURIComponent(text)}`;
+      return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     },
   },
   methods: {
     async fetchQuote() {
       try {
         this.error = null;
+        this.isLoading = true;
         const response = await axios.get('https://api.quotable.io/random');
         this.quote = response.data;
-        this.history.unshift(response.data); // добавляем цитату в начало истории
+        this.history.unshift(response.data); // Add quote to first index of array
       } catch (err) {
-        this.error = 'Произошла ошибка при загрузке цитаты. Попробуйте позже.';
+        this.error = 'There was an error loading the quote. Please try again later.';
+      } finally {
+        this.isLoading = false; // Finish loading
       }
     },
     copyToClipboard() {
       const text = `"${this.quote?.content}" — ${this.quote?.author}`;
       navigator.clipboard.writeText(text).then(() => {
-        alert("Цитата скопирована в буфер обмена!");
+        alert("The quote is copied to the clipboard!");
       });
     },
   },
@@ -70,20 +90,3 @@ export default {
   },
 };
 </script>
-
-<style>
-.wrapper {
-  display: flex;
-  align-content: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.social-share {
-  margin: 15px 0;
-}
-
-.history-item {
-  width: max-content;
-}
-</style>
