@@ -1,51 +1,38 @@
 <template>
   <div class="quote-generator">
-    <div>
-      <!--  If error, show error message  -->
-      <div v-if="error" class="error-message">
-        <span>{{ error }}</span>
-        <button @click="fetchQuote" class="new-quote-btn">Get new quote</button>
-      </div>
-
-      <div v-else>
-        <div v-if="quote">
-          <div class="quote-wrapper">
-            <p class="quote">{{ quote?.content }}</p>
-            <p v-if="quote?.author" class="author">— {{ quote.author }}</p>
-          </div>
-
-          <div class="wrapper">
-            <button @click="copyToClipboard" class="copy-btn">Copy quote</button>
-            <button @click="fetchQuote" :disabled="isLoading" class="new-quote-btn">
-              <!-- Showing text loading, if request sending -->
-              <span v-if="isLoading">Loading...</span>
-              <span v-else>Get new quote</span>
-            </button>
-          </div>
-
-          <!-- buttons for socials -->
-          <div class="social-share wrapper">
-            <a :href="telegramLink" target="_blank">Share to Telegram</a>
-            <a :href="twitterLink" target="_blank">Share to Twitter</a>
-          </div>
-        </div>
-      </div>
+    <!--  If error, show error message  -->
+    <div v-if="error" class="error-message">
+      <span>{{ error }}</span>
+      <button @click="fetchQuote" class="new-quote-btn">Get new quote</button>
     </div>
 
-    <!--  History block  -->
-    <h3 v-if="history.length > 0">History quotes</h3>
-    <ul v-if="history.length > 0" class="history">
-      <li class="history-item" v-for="(item, index) in history" :key="index">
-        "{{ item.content }}" — {{ item.author }}
-      </li>
-    </ul>
+    <div v-else>
+      <QuoteDisplay
+          v-if="quote"
+          :quote="quote"
+          :isLoading="isLoading"
+          @fetch-quote="fetchQuote"
+      />
+
+      <SocialShare v-if="quote" :quote="quote"/>
+
+      <QuoteHistory
+          :history="history"
+          @remove-quote="removeQuote"
+          @clear-history="clearHistoryQuotes"
+      />
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import SocialShare from './SocialShare.vue';
+import QuoteDisplay from './QuoteDisplay.vue';
+import QuoteHistory from "./QuoteHistory.vue";
 
 export default {
+  components: {QuoteDisplay, QuoteHistory, SocialShare},
   data() {
     return {
       quote: null,
@@ -53,16 +40,6 @@ export default {
       history: [],
       isLoading: false,
     };
-  },
-  computed: {
-    telegramLink() {
-      const text = `"${this.quote?.content}" — ${this.quote?.author}`;
-      return `https://t.me/share/url?url=${encodeURIComponent(text)}`;
-    },
-    twitterLink() {
-      const text = `"${this.quote?.content}" — ${this.quote?.author}`;
-      return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    },
   },
   methods: {
     async fetchQuote() {
@@ -78,12 +55,12 @@ export default {
         this.isLoading = false; // Finish loading
       }
     },
-    copyToClipboard() {
-      const text = `"${this.quote?.content}" — ${this.quote?.author}`;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("The quote is copied to the clipboard!");
-      });
+    removeQuote(index) {
+      this.history.splice(index, 1);
     },
+    clearHistoryQuotes() {
+      this.history = [];
+    }
   },
   mounted() {
     this.fetchQuote();

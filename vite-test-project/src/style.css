@@ -97,14 +97,31 @@ button {
   max-height: 200px;
   overflow-y: auto;
   width: 100%;
+  scrollbar-width: none;
 }
 
 .history-item {
+  position: relative;
   font-size: 0.9rem;
   color: #555;
   padding: 10px;
   border-bottom: 1px solid #e0e0e0;
   text-align: center;
+
+  .delete-item {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: #b43535;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease;
+
+    &:hover {
+      color: #ff4d4d;
+      transform: scale(1.2);
+    }
+  }
 }
 
 .new-quote-btn[disabled] {
