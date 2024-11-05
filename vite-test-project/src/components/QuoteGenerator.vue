@@ -30,6 +30,7 @@ import axios from 'axios';
 import SocialShare from './SocialShare.vue';
 import QuoteDisplay from './QuoteDisplay.vue';
 import QuoteHistory from "./QuoteHistory.vue";
+import {API_BASE_URL} from "../common/api/api.js";
 
 export default {
   components: {QuoteDisplay, QuoteHistory, SocialShare},
@@ -46,7 +47,7 @@ export default {
       try {
         this.error = null;
         this.isLoading = true;
-        const response = await axios.get('https://api.quotable.io/random');
+        const response = await axios.get(`${API_BASE_URL}/random`);
         this.quote = response.data;
         this.history.unshift(response.data); // Add quote to first index of array
       } catch (err) {
